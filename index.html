@@ -107,7 +107,7 @@
           pieces.push({
             sx: x * pieceWidth,
             sy: y * pieceHeight,
-            x: Math.random() * (canvas.width - pieceWidth * 2) + canvas.width, // start off-canvas
+            x: Math.random() * (canvas.width - pieceWidth), // now inside canvas for testing
             y: Math.random() * (canvas.height - pieceHeight),
             correctX: x * pieceWidth,
             correctY: y * pieceHeight,
