@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Happy Birthday Puzzle 💖</title>
+  <style>
+    @font-face {
+      font-family: 'Quicksand';
+      src: url('https://fonts.googleapis.com/css2?family=Quicksand:wght@400;700&display=swap');
+    }
+    body {
+      font-family: 'Quicksand', sans-serif;
+      text-align: center;
+      background: #fff0f5 url('background.png') no-repeat center center fixed;
+      background-size: cover;
+      overflow: hidden;
+    }
+    #start-screen {
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: rgba(255, 240, 245, 0.95);
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+      z-index: 2;
+    }
+    #start-screen h1 {
+      font-size: 2.5rem;
+      color: #ff69b4;
+    }
+    #start-heart {
+      font-size: 4rem;
+      color: red;
+      cursor: pointer;
+      animation: pulse 1s infinite;
+    }
+    @keyframes pulse {
+      0% { transform: scale(1); }
+      50% { transform: scale(1.1); }
+      100% { transform: scale(1); }
+    }
+    canvas {
+      border: 3px solid #f08080;
+      margin-top: 20px;
+      cursor: grab;
+      z-index: 1;
+    }
+    #confetti {
+      position: absolute;
+      top: 0;
+      left: 0;
+      pointer-events: none;
+    }
+    #message {
+      display: none;
+      font-size: 2rem;
+      color: #ff69b4;
+      margin-top: 20px;
+    }
+  </style>
+</head>
+<body>
+  <div id="start-screen">
+    <h1>You said we're the perfect match...<br>Let's see how we fit together.</h1>
+    <div id="start-heart">❤️</div>
+  </div>
+
+  <h1 style="display:none;" id="main-title">🎉 Happy Birthday, Dodi! 🧩</h1>
+  <p style="display:none;" id="main-instruction">Put the pieces together to see something special 💖</p>
+  <canvas id="puzzle" style="display:none;"></canvas>
+  <canvas id="confetti"></canvas>
+  <div id="message">💗 You completed the puzzle! I love you 💗</div>
+  <audio id="bg-music" autoplay loop>
+    <source src="spring-snow-10cm.mp3" type="audio/mpeg">
+    Your browser does not support the audio element.
+  </audio>
+
+  <script>
+    document.getElementById("start-heart").onclick = function () {
+      document.getElementById("start-screen").style.display = "none";
+      document.getElementById("main-title").style.display = "block";
+      document.getElementById("main-instruction").style.display = "block";
+      document.getElementById("puzzle").style.display = "block";
+      document.getElementById("bg-music").play();
+    };
+
+    const canvas = document.getElementById("puzzle");
+    const ctx = canvas.getContext("2d");
+    const img = new Image();
+    img.src = "puzzle.jpg";
+
+    const rows = 3, cols = 4; // 12 pieces
+    let pieces = [];
+    let pieceWidth, pieceHeight;
+    let dragging = null, offsetX = 0, offsetY = 0;
+    const snapTolerance = 20;
+
+    img.onload = () => {
+      pieceWidth = img.width / cols;
+      pieceHeight = img.height / rows;
+      canvas.width = img.width;
+      canvas.height = img.height;
+
+      for (let y = 0; y < rows; y++) {
+        for (let x = 0; x < cols; x++) {
+          pieces.push({
+            sx: x * pieceWidth,
+            sy: y * pieceHeight,
+            x: Math.random() * (canvas.width - pieceWidth * 2) + canvas.width, // start off-canvas
+            y: Math.random() * (canvas.height - pieceHeight),
+            correctX: x * pieceWidth,
+            correctY: y * pieceHeight,
+            placed: false
+          });
+        }
+      }
+      draw();
+    };
+
+    function draw() {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      for (let p of pieces) {
+        ctx.save();
+        ctx.beginPath();
+        ctx.moveTo(p.x + 10, p.y);
+        ctx.lineTo(p.x + pieceWidth - 10, p.y);
+        ctx.quadraticCurveTo(p.x + pieceWidth, p.y, p.x + pieceWidth, p.y + 10);
+        ctx.lineTo(p.x + pieceWidth, p.y + pieceHeight - 10);
+        ctx.quadraticCurveTo(p.x + pieceWidth, p.y + pieceHeight, p.x + pieceWidth - 10, p.y + pieceHeight);
+        ctx.lineTo(p.x + 10, p.y + pieceHeight);
+        ctx.quadraticCurveTo(p.x, p.y + pieceHeight, p.x, p.y + pieceHeight - 10);
+        ctx.lineTo(p.x, p.y + 10);
+        ctx.quadraticCurveTo(p.x, p.y, p.x + 10, p.y);
+        ctx.closePath();
+        ctx.clip();
+        ctx.drawImage(img, p.sx, p.sy, pieceWidth, pieceHeight, p.x, p.y, pieceWidth, pieceHeight);
+        ctx.restore();
+      }
+    }
+
+    function getPieceAt(x, y) {
+      return [...pieces].reverse().find(p =>
+        !p.placed &&
+        x >= p.x && x <= p.x + pieceWidth &&
+        y >= p.y && y <= p.y + pieceHeight
+      );
+    }
+
+    canvas.onmousedown = e => {
+      const rect = canvas.getBoundingClientRect();
+      const x = e.clientX - rect.left, y = e.clientY - rect.top;
+      const piece = getPieceAt(x, y);
+      if (piece) {
+        dragging = piece;
+        offsetX = x - piece.x;
+        offsetY = y - piece.y;
+      }
+    };
+
+    canvas.onmousemove = e => {
+      if (dragging) {
+        const rect = canvas.getBoundingClientRect();
+        dragging.x = e.clientX - rect.left - offsetX;
+        dragging.y = e.clientY - rect.top - offsetY;
+        draw();
+      }
+    };
+
+    canvas.onmouseup = () => {
+      if (dragging) {
+        if (
+          Math.abs(dragging.x - dragging.correctX) < snapTolerance &&
+          Math.abs(dragging.y - dragging.correctY) < snapTolerance
+        ) {
+          dragging.x = dragging.correctX;
+          dragging.y = dragging.correctY;
+          dragging.placed = true;
+          checkCompletion();
+        }
+        dragging = null;
+        draw();
+      }
+    };
+
+    function checkCompletion() {
+      if (pieces.every(p => p.placed)) {
+        triggerConfetti();
+        document.getElementById("message").style.display = "block";
+      }
+    }
+
+    const confettiCanvas = document.getElementById("confetti");
+    const confettiCtx = confettiCanvas.getContext("2d");
+    confettiCanvas.width = window.innerWidth;
+    confettiCanvas.height = window.innerHeight;
+
+    let confettiParticles = [];
+
+    function triggerConfetti() {
+      for (let i = 0; i < 200; i++) {
+        confettiParticles.push({
+          x: Math.random() * confettiCanvas.width,
+          y: Math.random() * confettiCanvas.height - confettiCanvas.height,
+          r: Math.random() * 6 + 4,
+          d: Math.random() * 50 + 10,
+          color: `hsl(${Math.random() * 360}, 100%, 70%)`,
+          tilt: Math.random() * 10 - 10
+        });
+      }
+      requestAnimationFrame(drawConfetti);
+    }
+
+    function drawConfetti() {
+      confettiCtx.clearRect(0, 0, confettiCanvas.width, confettiCanvas.height);
+      confettiParticles.forEach(p => {
+        confettiCtx.beginPath();
+        confettiCtx.fillStyle = p.color;
+        confettiCtx.arc(p.x, p.y, p.r, 0, Math.PI * 2);
+        confettiCtx.fill();
+        p.y += Math.cos(p.d) + 2;
+        p.x += Math.sin(p.d);
+        p.tilt += Math.random() * 0.5 - 0.25;
+      });
+      requestAnimationFrame(drawConfetti);
+    }
+  </script>
+</body>
+</html>
