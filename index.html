@@ -9,7 +9,10 @@
       text-align: center;
       background: #fff0f5;
       overflow: hidden;
+      margin: 0;
+      padding: 0;
     }
+
     #start-screen {
       position: absolute;
       width: 100%;
@@ -21,65 +24,95 @@
       align-items: center;
       z-index: 2;
     }
+
     #start-screen h1 {
       font-size: 2.2rem;
       color: #ff69b4;
       margin-bottom: 20px;
     }
+
     #start-heart {
       font-size: 4rem;
       color: red;
       cursor: pointer;
       animation: pulse 1s infinite;
     }
+
     @keyframes pulse {
       0% { transform: scale(1); }
       50% { transform: scale(1.1); }
       100% { transform: scale(1); }
     }
+
+    #main-title, #main-instruction {
+      display: none;
+    }
+
+    .center-container {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px;
+    }
+
     canvas {
       border: 3px solid #f08080;
-      margin-top: 20px;
       cursor: grab;
       display: none;
     }
+
     #confetti {
-      position: absolute;
+      position: fixed;
       top: 0;
       left: 0;
       pointer-events: none;
+      z-index: 3;
     }
+
     #message {
       display: none;
       font-size: 2rem;
-      color: #ff69b4;
-      margin-top: 20px;
-    }
-    #main-title, #main-instruction {
-      display: none;
+      color: white;
+      background: #ff69b4;
+      border-radius: 10px;
+      padding: 20px;
+      position: fixed;
+      top: 30%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 4;
+      box-shadow: 0 0 15px rgba(0, 0, 0, 0.3);
     }
   </style>
 </head>
 <body>
   <div id="start-screen">
-    <h1>You said we're the perfect match...<br>Let's see how we fit together.</h1>
+    <h1>Click the ❤️ to start!</h1>
     <div id="start-heart">❤️</div>
   </div>
 
   <h1 id="main-title">🎉 Happy Birthday, Dodi! 🧩</h1>
   <p id="main-instruction">Put the pieces together to see something special 💖</p>
-  <canvas id="puzzle"></canvas>
+
+  <div class="center-container">
+    <canvas id="puzzle"></canvas>
+  </div>
   <canvas id="confetti"></canvas>
   <div id="message">💗 You completed the puzzle! I love you 💗</div>
 
   <script>
-    // Clickable heart
-    document.getElementById("start-heart").onclick = function () {
-      document.getElementById("start-screen").style.display = "none";
-      document.getElementById("main-title").style.display = "block";
-      document.getElementById("main-instruction").style.display = "block";
-      document.getElementById("puzzle").style.display = "block";
-    };
+    const startScreen = document.getElementById("start-screen");
+    const startHeart = document.getElementById("start-heart");
+    const mainTitle = document.getElementById("main-title");
+    const mainInstruction = document.getElementById("main-instruction");
+    const puzzleCanvas = document.getElementById("puzzle");
+
+    startHeart.addEventListener("click", () => {
+      startScreen.style.display = "none";
+      mainTitle.style.display = "block";
+      mainInstruction.style.display = "block";
+      puzzleCanvas.style.display = "block";
+    });
 
     const canvas = document.getElementById("puzzle");
     const ctx = canvas.getContext("2d");
@@ -167,8 +200,10 @@
 
     function checkCompletion() {
       if (pieces.every(p => p.placed)) {
-        triggerConfetti();
-        document.getElementById("message").style.display = "block";
+        setTimeout(() => {
+          triggerConfetti();
+          document.getElementById("message").style.display = "block";
+        }, 300);
       }
     }
 
@@ -205,7 +240,10 @@
         p.x += Math.sin(p.d);
         p.tilt += Math.random() * 0.5 - 0.25;
       });
-      requestAnimationFrame(drawConfetti);
+
+      if (confettiParticles.length > 0) {
+        requestAnimationFrame(drawConfetti);
+      }
     }
   </script>
 </body>
